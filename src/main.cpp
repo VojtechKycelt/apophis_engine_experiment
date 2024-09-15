@@ -3,6 +3,8 @@
 
 int main()
 {
+    //TODO make cpp file just for Pong game and use Renderer header
+
     //declare renderer with window
     Renderer renderer(sf::Vector2i(1280, 720), "APOPHIS ENGINE EXPERIMENT", 240);
 
