@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "renderer.h"
@@ -28,6 +29,10 @@ bool detect_collision_2d(const sf::Vector2f &a, const sf::Vector2f &b, const sf:
     return true;
 }
 
+void reset_game() {
+
+};
+
 int main() {
     //TODO make cpp file just for Pong game and use Renderer header
 
@@ -39,28 +44,32 @@ int main() {
 
     //declare rectangle
     sf::RectangleShape rect;
-    sf::Vector2f rectanglePosition(540, 250);
-    sf::Vector2f rect_velocity(0.0, 0.0);
+    sf::Vector2f rect_start_position(540, 250);
+    sf::Vector2f rect_position(rect_start_position);
+    sf::Vector2f rect_velocity(-400.0, -200.0);
     rect.setSize(sf::Vector2f(100, 100));
     rect.setFillColor(sf::Color(250, 250, 250));
     rect.setOutlineColor(sf::Color::White);
     rect.setOutlineThickness(0);
-    rect.setPosition(rectanglePosition);
+    rect.setPosition(rect_position);
 
     //declare paddle
     sf::RectangleShape player_paddle;
     sf::Vector2f player_paddle_position(20, renderer.WINDOW_SIZE.y / 2);
-    float player_paddle_speed = 300.0;
+    float player_paddle_speed = 500.0;
     player_paddle.setSize(sf::Vector2f(20, 200));
     player_paddle.setFillColor(sf::Color::Red);
     player_paddle.setOutlineColor(sf::Color(0, 0, 250));
     player_paddle.setOutlineThickness(0);
     player_paddle.setPosition(player_paddle_position);
 
+    //smooth input declaration
     bool key_up_pressed = false;
     bool key_down_pressed = false;
     bool key_left_pressed = false;
     bool key_right_pressed = false;
+
+    int goals = 0;
 
     //keep track of time between frames
     sf::Clock deltaClock;
@@ -109,11 +118,18 @@ int main() {
         }
 
         if (key_up_pressed && player_paddle_position.y > player_paddle.getOutlineThickness()) {
-            player_paddle_position.y -= player_paddle_speed * deltaTime;
+            sf::Vector2f new_pos(player_paddle_position.x,player_paddle_position.y - player_paddle_speed * deltaTime);
+            if (!detect_collision_2d(new_pos,rect_position,player_paddle.getSize(),rect.getSize())) {
+                player_paddle_position.y -= player_paddle_speed * deltaTime;
+            }
         }
         if (key_down_pressed && player_paddle_position.y < renderer.WINDOW_SIZE.y - player_paddle.getSize().y -
             player_paddle.getOutlineThickness()) {
-            player_paddle_position.y += player_paddle_speed * deltaTime;
+            sf::Vector2f new_pos(player_paddle_position.x,player_paddle_position.y + player_paddle_speed * deltaTime);
+            if (!detect_collision_2d(new_pos,rect_position,player_paddle.getSize(),rect.getSize())) {
+                player_paddle_position.y += player_paddle_speed * deltaTime;
+            }
+
         }
         if (key_right_pressed) {
             player_paddle_position.x += player_paddle_speed * deltaTime;
@@ -122,34 +138,41 @@ int main() {
             player_paddle_position.x -= player_paddle_speed * deltaTime;
         }
 
-        if (rectanglePosition.x < player_paddle_position.x + player_paddle.getSize().x + player_paddle.
-            getOutlineThickness()) {
-            if ((rectanglePosition.y < player_paddle_position.y
-                 && rectanglePosition.y + rect.getSize().y > player_paddle_position.y)
-                || (rectanglePosition.y > player_paddle_position.y && rectanglePosition.y + rect.getSize().y
-                    < player_paddle_position.y + player_paddle.getSize().y + rect.getSize().y)) {
-                rect_velocity.x *= -1;
-            }
+        if (detect_collision_2d(player_paddle_position,rect_position,player_paddle.getSize(),rect.getSize())) {
+            rect_velocity.x *= -1;
         }
 
-
         //physics
-        if (rectanglePosition.x + rect_velocity.x * deltaTime < 0 || rectanglePosition.x + rect_velocity.x * deltaTime >
-            renderer.WINDOW_SIZE.x - rect.getSize().x)
+        if (rect_position.x + rect.getSize().x < 0) {
+            goals += 1;
+            rect_position = rect_start_position;
+            //reset_game();
+        }
+        if (rect_position.x + rect_velocity.x * deltaTime > renderer.WINDOW_SIZE.x - rect.getSize().x)
             rect_velocity.x *= -1;
-        if (rectanglePosition.y + rect_velocity.y * deltaTime < 0 || rectanglePosition.y + rect_velocity.y * deltaTime >
+        if (rect_position.y + rect_velocity.y * deltaTime < 0 || rect_position.y + rect_velocity.y * deltaTime >
             renderer.WINDOW_SIZE.y - rect.getSize().y)
             rect_velocity.y *= -1;
-        rectanglePosition.x += rect_velocity.x * deltaTime;
-        rectanglePosition.y += rect_velocity.y * deltaTime;
 
-        rect.setPosition(rectanglePosition);
+        rect_position.x += rect_velocity.x * deltaTime;
+        rect_position.y += rect_velocity.y * deltaTime;
+
+        rect.setPosition(rect_position);
         player_paddle.setPosition(player_paddle_position);
+
+        sf::Font font;
+        if (!font.loadFromFile("../../src/spaceranger.ttf"))
+            return EXIT_FAILURE;
+        std::string goals_string = std::to_string(goals);
+        sf::Text text(goals_string, font, 100);
+        text.setColor(sf::Color::White);
+        text.setPosition(renderer.window.getSize().x/2,1);
 
         //display rectangle
         renderer.window.clear(sf::Color::Green);
         renderer.window.draw(rect);
         renderer.window.draw(player_paddle);
+        renderer.window.draw(text);
         renderer.window.display();
     }
 }
