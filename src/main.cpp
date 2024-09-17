@@ -1,3 +1,4 @@
+#include <iostream>
 #include <SFML/Graphics.hpp>
 #include "renderer.h"
 
@@ -6,7 +7,10 @@ int main()
     //TODO make cpp file just for Pong game and use Renderer header
 
     //declare renderer with window
-    Renderer renderer(sf::Vector2i(1280, 720), "APOPHIS ENGINE EXPERIMENT", 240);
+    Renderer renderer(
+        sf::Vector2i(1280, 720),
+        "APOPHIS ENGINE EXPERIMENT",
+        240);
 
     //declare rectangle
     sf::RectangleShape rect;
@@ -17,6 +21,19 @@ int main()
     rect.setOutlineColor(sf::Color::White);
     rect.setOutlineThickness(10);
     rect.setPosition(rectanglePosition);
+
+    //declare paddle
+    sf::RectangleShape player_paddle;
+    sf::Vector2f player_paddle_position(20,renderer.WINDOW_SIZE.y/2);
+    float player_paddle_speed = 500.0;
+    player_paddle.setSize(sf::Vector2f(25, 200));
+    player_paddle.setFillColor(sf::Color(0,0,250));
+    player_paddle.setOutlineColor(sf::Color::White);
+    player_paddle.setOutlineThickness(10);
+    player_paddle.setPosition(player_paddle_position);
+
+    bool key_up_pressed = false;
+    bool key_down_pressed = false;
 
     //keep track of time between frames
     sf::Clock deltaClock;
@@ -31,25 +48,48 @@ int main()
         //handle input
         for (auto event = sf::Event{}; renderer.window.pollEvent(event);) {
             if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) renderer.window.close();
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-                rect_velocity.x *= 2;
-                rect_velocity.y *= 2;
+
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.scancode == sf::Keyboard::Scan::Up) {
+                    key_up_pressed = true;
+                }
+                if (event.key.scancode == sf::Keyboard::Scan::Down) {
+                    key_down_pressed = true;
+                }
             }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-                rect_velocity.x /= 2;
-                rect_velocity.y /= 2;
+
+            if (event.type == sf::Event::KeyReleased) {
+                if (event.key.scancode == sf::Keyboard::Scan::Up) {
+                    key_up_pressed = false;
+                }
+                if (event.key.scancode == sf::Keyboard::Scan::Down) {
+                    key_down_pressed = false;
+                }
             }
+
         }
 
+        if (key_up_pressed && player_paddle_position.y > player_paddle.getOutlineThickness()) {
+            player_paddle_position.y -= player_paddle_speed * deltaTime;
+        }
+        if (key_down_pressed && player_paddle_position.y < renderer.WINDOW_SIZE.y - player_paddle.getSize().y - player_paddle.getOutlineThickness()) {
+            player_paddle_position.y += player_paddle_speed * deltaTime;
+        }
         //physics
         if (rectanglePosition.x + rect_velocity.x * deltaTime < 0 || rectanglePosition.x + rect_velocity.x * deltaTime > renderer.WINDOW_SIZE.x - rect.getSize().x) rect_velocity.x *= -1;
         if (rectanglePosition.y + rect_velocity.y * deltaTime < 0 || rectanglePosition.y + rect_velocity.y * deltaTime > renderer.WINDOW_SIZE.y - rect.getSize().y) rect_velocity.y *= -1;
         rectanglePosition.x += rect_velocity.x * deltaTime;
         rectanglePosition.y += rect_velocity.y * deltaTime;
         rect.setPosition(rectanglePosition);
+        player_paddle.setPosition(player_paddle_position);
+
 
         //display rectangle
-        renderer.render(rect);
+        renderer.window.clear(sf::Color::Green);
+        renderer.window.draw(rect);
+        renderer.window.draw(player_paddle);
+        renderer.window.display();
+
     }
 }
 
