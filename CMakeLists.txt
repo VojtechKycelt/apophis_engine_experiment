@@ -16,7 +16,9 @@ FetchContent_MakeAvailable(SFML)
 add_executable(main src/main.cpp
         src/renderer.h
         src/pong.cpp
-        src/pong.h)
+        src/pong.h
+        src/util.cpp
+        src/util.h)
 target_link_libraries(main PRIVATE sfml-graphics)
 target_compile_features(main PRIVATE cxx_std_17)
 

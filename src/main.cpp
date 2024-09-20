@@ -2,44 +2,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "renderer.h"
-#include <random>
-
-
-bool detect_rect_collision_2d(const sf::Vector2f &a, const sf::Vector2f &b, const sf::Vector2f &a_size,
-                              const sf::Vector2f &b_size) {
-    float ax = a.x;
-    float ay = a.y;
-    float axe = a.x + a_size.x;
-    float aye = a.y + a_size.y;
-
-    float bx = b.x;
-    float by = b.y;
-    float bxe = b.x + b_size.x;
-    float bye = b.y + b_size.y;
-
-    if (ax < bx) {
-        if (axe < bx) { return false; } //
-        if (aye < by) { return false; } //
-        if (ay > bye) { return false; } //
-        return true;
-    }
-    if (ax > bxe) { return false; }
-    if (aye < by) { return false; }
-    if (ay > bye) { return false; }
-
-    return true;
-}
-
-float randomf(float min, float max) {
-    std::random_device rd; // Získání náhodného semene
-    std::mt19937 gen(rd()); // Mersenne Twister generátor s náhodným semenem
-    std::uniform_real_distribution<> dist(min, max); // Rozmezí 1.0 - 2.0
-
-    // Generování náhodného float čísla
-    float randomFloat = dist(gen);
-
-    return randomFloat;
-}
+#include "util.h"
 
 int main() {
     //TODO make cpp file just for Pong game and use Renderer header
@@ -90,16 +53,47 @@ int main() {
     sf::Clock deltaClock;
     float deltaTime;
 
+    bool game_paused = false;
+    bool pause_key_pressed = false;
+
+    sf::Font font;
+    if (!font.loadFromFile("../../src/spaceranger.ttf"))
+        return EXIT_FAILURE;
+
     //engine loop
     while (renderer.window.isOpen()) {
         //get delta time for same speed of the engine with different fps
         deltaTime = deltaClock.restart().asSeconds();
 
+        if (!pause_key_pressed) {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::P)) {
+                game_paused = !game_paused;
+                pause_key_pressed = true;
+            };
+        }
+
         //handle input
         for (auto event = sf::Event{}; renderer.window.pollEvent(event);) {
+
+            if (!pause_key_pressed) {
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::P)) {
+                    game_paused = !game_paused;
+                    pause_key_pressed = true;
+                };
+            }
+            if (event.type == sf::Event::KeyReleased) {
+                if (event.key.scancode == sf::Keyboard::Scan::P) {
+                    pause_key_pressed = false;
+                }
+            }
             if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                renderer.window.
-                        close();
+                renderer.window.close();
+
+            if (game_paused) {
+                key_up_pressed = false;
+                key_down_pressed = false;
+                break;
+            };
 
             if (event.type == sf::Event::KeyPressed) {
                 if (event.key.scancode == sf::Keyboard::Scan::Up) {
@@ -120,105 +114,126 @@ int main() {
             }
         }
 
-        if (key_up_pressed && player_paddle_position.y > player_paddle.getOutlineThickness()) {
-            sf::Vector2f new_pos(player_paddle_position.x, player_paddle_position.y - player_paddle_speed * deltaTime);
-            if (!detect_rect_collision_2d(new_pos, rect_position, player_paddle.getSize(), rect.getSize())) {
-                player_paddle_position.y -= player_paddle_speed * deltaTime;
+
+        if (!game_paused) {
+            if (key_up_pressed && player_paddle_position.y > player_paddle.getOutlineThickness()) {
+                sf::Vector2f new_pos(player_paddle_position.x,
+                                     player_paddle_position.y - player_paddle_speed * deltaTime);
+                if (!detect_rect_collision_2d(new_pos, rect_position, player_paddle.getSize(), rect.getSize())) {
+                    player_paddle_position.y -= player_paddle_speed * deltaTime;
+                }
             }
-        }
-        if (key_down_pressed && player_paddle_position.y < renderer.WINDOW_SIZE.y - player_paddle.getSize().y -
-            player_paddle.getOutlineThickness()) {
-            sf::Vector2f new_pos(player_paddle_position.x, player_paddle_position.y + player_paddle_speed * deltaTime);
-            if (!detect_rect_collision_2d(new_pos, rect_position, player_paddle.getSize(), rect.getSize())) {
-                player_paddle_position.y += player_paddle_speed * deltaTime;
+            if (key_down_pressed && player_paddle_position.y < renderer.WINDOW_SIZE.y - player_paddle.getSize().y -
+                player_paddle.getOutlineThickness()) {
+                sf::Vector2f new_pos(player_paddle_position.x,
+                                     player_paddle_position.y + player_paddle_speed * deltaTime);
+                if (!detect_rect_collision_2d(new_pos, rect_position, player_paddle.getSize(), rect.getSize())) {
+                    player_paddle_position.y += player_paddle_speed * deltaTime;
+                }
             }
-        }
 
-        //physics
-        if (rect_position.x + rect.getSize().x < 0) {
-            bot_score += 1;
-            rect_position = rect_start_position;
-            rect_velocity = sf::Vector2f(400.0, 0.0);
-        }
-        if (rect_position.x + rect_velocity.x * deltaTime > renderer.WINDOW_SIZE.x) {
-            player_score += 1;
-            rect_position = rect_start_position;
-            rect_velocity = sf::Vector2f(-400.0, 0.0);
-        }
+            //physics
+            if (rect_position.x + rect.getSize().x < 0) {
+                bot_score += 1;
+                rect_position = rect_start_position;
+                rect_velocity = sf::Vector2f(400.0, 0.0);
+            }
+            if (rect_position.x + rect_velocity.x * deltaTime > renderer.WINDOW_SIZE.x) {
+                player_score += 1;
+                rect_position = rect_start_position;
+                rect_velocity = sf::Vector2f(-400.0, 0.0);
+            }
 
-        if (rect_position.y + rect_velocity.y * deltaTime < 0 || rect_position.y + rect_velocity.y * deltaTime >
-            renderer.WINDOW_SIZE.y - rect.getSize().y)
-            rect_velocity.y *= -1;
+            if (rect_position.y + rect_velocity.y * deltaTime < 0 || rect_position.y + rect_velocity.y * deltaTime >
+                renderer.WINDOW_SIZE.y - rect.getSize().y)
+                rect_velocity.y *= -1;
 
-        if (!detect_rect_collision_2d(player_paddle_position,
-                                      sf::Vector2f(rect_position.x + rect_velocity.x * deltaTime, rect_position.y),
-                                      player_paddle.getSize(), rect.getSize())) {
-            rect_position.x += rect_velocity.x * deltaTime;
+            if (!detect_rect_collision_2d(player_paddle_position,
+                                          sf::Vector2f(rect_position.x + rect_velocity.x * deltaTime, rect_position.y),
+                                          player_paddle.getSize(), rect.getSize())) {
+                rect_position.x += rect_velocity.x * deltaTime;
+            } else {
+                rect_velocity.x *= -ball_velocity_multiplier;
+                rect_velocity.y = randomf(-4.0, 4.0) * 100;
+            }
+            if (!detect_rect_collision_2d(player_paddle_position,
+                                          sf::Vector2f(rect_position.x, rect_position.y + rect_velocity.y * deltaTime),
+                                          player_paddle.getSize(), rect.getSize())) {
+                rect_position.y += rect_velocity.y * deltaTime;
+            } else { rect_velocity.y *= -1; }
+
+            if (detect_rect_collision_2d(bot_paddle_position,
+                                         sf::Vector2f(rect_position.x + rect_velocity.x * deltaTime, rect_position.y),
+                                         bot_paddle.getSize(), rect.getSize())) {
+                rect_velocity.x *= -ball_velocity_multiplier;
+                rect_velocity.y = randomf(-4.0, 4.0) * 100;
+            }
+            if (detect_rect_collision_2d(bot_paddle_position,
+                                         sf::Vector2f(rect_position.x, rect_position.y + rect_velocity.y * deltaTime),
+                                         bot_paddle.getSize(), rect.getSize())) { rect_velocity.y *= -1; }
+
+            //BOT AI
+            float ball_center_pos_y = rect.getPosition().y + rect.getSize().y / 2;
+            if (bot_paddle_position.y + bot_paddle.getSize().y / 2 > ball_center_pos_y) {
+                if (!detect_rect_collision_2d(bot_paddle_position,
+                                              sf::Vector2f(rect_position.x,
+                                                           rect_position.y + rect_velocity.y * deltaTime),
+                                              bot_paddle.getSize(), rect.getSize()) && bot_paddle_position.y > 0) {
+                    bot_paddle_position.y -= bot_paddle_speed * deltaTime;
+                }
+            }
+            if (bot_paddle_position.y + bot_paddle.getSize().y / 2 < ball_center_pos_y) {
+                if (!detect_rect_collision_2d(bot_paddle_position,
+                                              sf::Vector2f(rect_position.x,
+                                                           rect_position.y + rect_velocity.y * deltaTime),
+                                              bot_paddle.getSize(),
+                                              rect.getSize()) && bot_paddle_position.y + bot_paddle.getSize().y <
+                    renderer.
+                    window.getSize().y) {
+                    bot_paddle_position.y += bot_paddle_speed * deltaTime;
+                }
+            }
+
+            rect.setPosition(rect_position);
+            player_paddle.setPosition(player_paddle_position);
+            bot_paddle.setPosition(bot_paddle_position);
+
+
+            //display score
+
+            std::string player_score_string = std::to_string(player_score);
+            std::string bot_score_string = std::to_string(bot_score);
+            sf::Text scoreboard(player_score_string += " : " + bot_score_string, font, 100);
+            scoreboard.setFillColor(sf::Color::White);
+            scoreboard.setOutlineColor(sf::Color::Black);
+            //scoreboard.setOutlineThickness(1);
+            sf::FloatRect textRect = scoreboard.getLocalBounds();
+            scoreboard.setOrigin(textRect.left + textRect.width / 2.0f,
+                                 textRect.top + textRect.height / 2.0f);
+            scoreboard.setPosition(sf::Vector2f(renderer.window.getSize().x / 2.0f, 50));
+
+            //display rectangle
+            renderer.window.clear(sf::Color::Green);
+            renderer.window.draw(rect);
+            renderer.window.draw(player_paddle);
+            renderer.window.draw(bot_paddle);
+            renderer.window.draw(scoreboard);
+            renderer.window.display();
+
         } else {
-            rect_velocity.x *= -ball_velocity_multiplier;
-            rect_velocity.y = randomf(-4.0, 4.0) * 100;
-        }
-        if (!detect_rect_collision_2d(player_paddle_position,
-                                      sf::Vector2f(rect_position.x, rect_position.y + rect_velocity.y * deltaTime),
-                                      player_paddle.getSize(), rect.getSize())) {
-            rect_position.y += rect_velocity.y * deltaTime;
-        } else { rect_velocity.y *= -1; }
+            //render paused text
+            sf::Text pause_text("PAUSED",font, 200);
+            pause_text.setFillColor(sf::Color::Black);
+            pause_text.setOutlineColor(sf::Color::White);
+            pause_text.setOutlineThickness(1);
+            sf::FloatRect textRect = pause_text.getLocalBounds();
+            pause_text.setOrigin(textRect.left + textRect.width / 2.0f,
+                                 textRect.top + textRect.height / 2.0f);
+            pause_text.setPosition(sf::Vector2f(renderer.window.getSize().x / 2.0f, renderer.window.getSize().y / 2.0f));
+            renderer.window.draw(pause_text);
+            renderer.window.display();
 
-        if (detect_rect_collision_2d(bot_paddle_position,
-                                     sf::Vector2f(rect_position.x + rect_velocity.x * deltaTime, rect_position.y),
-                                     bot_paddle.getSize(), rect.getSize())) {
-            rect_velocity.x *= -ball_velocity_multiplier;
-            rect_velocity.y = randomf(-4.0, 4.0) * 100;
-        }
-        if (detect_rect_collision_2d(bot_paddle_position,
-                                     sf::Vector2f(rect_position.x, rect_position.y + rect_velocity.y * deltaTime),
-                                     bot_paddle.getSize(), rect.getSize())) { rect_velocity.y *= -1; }
-
-        //BOT AI
-        float ball_center_pos_y = rect.getPosition().y + rect.getSize().y / 2;
-        if (bot_paddle_position.y + bot_paddle.getSize().y / 2 > ball_center_pos_y) {
-            if (!detect_rect_collision_2d(bot_paddle_position,
-                                          sf::Vector2f(rect_position.x, rect_position.y + rect_velocity.y * deltaTime),
-                                          bot_paddle.getSize(), rect.getSize()) && bot_paddle_position.y > 0) {
-                bot_paddle_position.y -= bot_paddle_speed * deltaTime;
-            }
-        }
-        if (bot_paddle_position.y + bot_paddle.getSize().y / 2 < ball_center_pos_y) {
-            if (!detect_rect_collision_2d(bot_paddle_position,
-                                          sf::Vector2f(rect_position.x, rect_position.y + rect_velocity.y * deltaTime),
-                                          bot_paddle.getSize(),
-                                          rect.getSize()) && bot_paddle_position.y + bot_paddle.getSize().y < renderer.
-                window.getSize().y) {
-                bot_paddle_position.y += bot_paddle_speed * deltaTime;
-            }
         }
 
-        rect.setPosition(rect_position);
-        player_paddle.setPosition(player_paddle_position);
-        bot_paddle.setPosition(bot_paddle_position);
-
-
-        //display score
-        sf::Font font;
-        if (!font.loadFromFile("../../src/spaceranger.ttf"))
-            return EXIT_FAILURE;
-        std::string player_score_string = std::to_string(player_score);
-        std::string bot_score_string = std::to_string(bot_score);
-        sf::Text scoreboard(player_score_string += " : " + bot_score_string, font, 100);
-        scoreboard.setFillColor(sf::Color::White);
-        scoreboard.setOutlineColor(sf::Color::Black);
-        //scoreboard.setOutlineThickness(1);
-        sf::FloatRect textRect = scoreboard.getLocalBounds();
-        scoreboard.setOrigin(textRect.left + textRect.width / 2.0f,
-                             textRect.top + textRect.height / 2.0f);
-        scoreboard.setPosition(sf::Vector2f(renderer.window.getSize().x / 2.0f, 50));
-
-        //display rectangle
-        renderer.window.clear(sf::Color::Green);
-        renderer.window.draw(rect);
-        renderer.window.draw(player_paddle);
-        renderer.window.draw(bot_paddle);
-        renderer.window.draw(scoreboard);
-        renderer.window.display();
     }
 }
