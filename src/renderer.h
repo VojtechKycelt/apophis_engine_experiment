@@ -7,10 +7,10 @@ class Renderer {
 public:
     //TODO explicit? wdym?
     //default constructor?
-    explicit Renderer(const sf::Vector2i& window_size, const std::string& window_name, const int& fps_limit) : WINDOW_SIZE(window_size),
+    Renderer(const Renderer &);
+    Renderer(const sf::Vector2i& window_size, const std::string& window_name, const int& fps_limit) : WINDOW_SIZE(window_size),
         window_name_(window_name) {
         window.setFramerateLimit(fps_limit);
-
     };
     const sf::Vector2i WINDOW_SIZE;
     std::string window_name_;
