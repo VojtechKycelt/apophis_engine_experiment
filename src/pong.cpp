@@ -6,133 +6,128 @@
 #include <iostream>
 #include "util.h"
 
-void Pong::check_goals(float deltaTime) {
+void Pong::check_goals() {
     if (ball.position_.x + ball.shape_.getSize().x < 0) {
         bot_score += 1;
         ball.position_ = ball.start_position_;
         ball.velocity_ = sf::Vector2f(400.0, 0.0);
     }
-    if (ball.position_.x + ball.velocity_.x * deltaTime > renderer_.WINDOW_SIZE.x) {
+    if (ball.position_.x + ball.velocity_.x * delta_time > renderer_.WINDOW_SIZE.x) {
         player_score += 1;
         ball.position_ = ball.start_position_;
         ball.velocity_ = sf::Vector2f(-400.0, 0.0);
     }
 }
 
-void Pong::check_wall_collision(float deltaTime) {
-    if (ball.position_.y + ball.velocity_.y * deltaTime < 0 || ball.position_.y + ball.velocity_.y * deltaTime >
+void Pong::check_wall_collision() {
+    if (ball.position_.y + ball.velocity_.y * delta_time < 0 || ball.position_.y + ball.velocity_.y * delta_time >
         renderer_.WINDOW_SIZE.y - ball.shape_.getSize().y)
         ball.velocity_.y *= -1;
 }
 
-void Pong::check_paddle_single_axis_collision(const Paddle &paddle, const char &axis, float deltaTime) {
-    if (axis == 'x') {
-        if (detect_rect_collision_2d(player_paddle.position_,
-                                  sf::Vector2f(ball.position_.x + ball.velocity_.x * deltaTime, ball.position_.y),
-                                  player_paddle.shape_.getSize(), ball.shape_.getSize())) {
-            ball.velocity_.x *= -ball_velocity_multiplier;
-            ball.velocity_.y = randomf(-4.0, 4.0) * 100;
-                                  } else {
-                                      ball.position_.x += ball.velocity_.x * deltaTime;
-                                  }
+void Pong::check_paddle_single_axis_collision(const Paddle &paddle, const char &axis) {
+    if (axis == 'x' && detect_rect_collision_2d(paddle.position_,
+                                                sf::Vector2f(ball.position_.x + ball.velocity_.x * delta_time,
+                                                             ball.position_.y),
+                                                paddle.shape_.getSize(), ball.shape_.getSize())) {
+        ball.velocity_.x *= -ball_velocity_multiplier;
+        ball.velocity_.y = randomf(-4.0, 4.0) * 100;
     }
-    if (axis == 'y') {
-
+    if (axis == 'y' && detect_rect_collision_2d(paddle.position_,
+                                                sf::Vector2f(ball.position_.x,
+                                                             ball.position_.y + ball.velocity_.y * delta_time),
+                                                paddle.shape_.getSize(), ball.shape_.getSize())) {
+        ball.velocity_.y *= -ball_velocity_multiplier;
     }
-
 }
 
+void Pong::move_ball() {
+    ball.position_.x += ball.velocity_.x * delta_time;
+    ball.position_.y += ball.velocity_.y * delta_time;
+}
 
-void Pong::render_unpaused(float deltaTime, bool key_up_pressed, bool key_down_pressed) {
-    //check for collisions
-    //move player paddle if there is no ball colliding up
-    if (key_up_pressed && player_paddle.position_.y > player_paddle.shape_.getOutlineThickness()) {
-        sf::Vector2f new_pos(player_paddle.position_.x,
-                             player_paddle.position_.y - player_paddle.speed_ * deltaTime);
-        if (!detect_rect_collision_2d(new_pos, ball.position_, player_paddle.shape_.getSize(),
-                                      ball.shape_.getSize())) {
-            player_paddle.position_.y -= player_paddle.speed_ * deltaTime;
-        }
-    }
-    //move player paddle if there is no ball colliding down
-    if (key_down_pressed && player_paddle.position_.y < renderer_.WINDOW_SIZE.y - player_paddle.shape_.getSize().
-        y -
-        player_paddle.shape_.getOutlineThickness()
-    ) {
-        sf::Vector2f new_pos(player_paddle.position_.x,
-                             player_paddle.position_.y + player_paddle.speed_ * deltaTime);
-        if (!detect_rect_collision_2d(new_pos, ball.position_, player_paddle.shape_.getSize(),
-                                      ball.shape_.getSize())) {
-            player_paddle.position_.y += player_paddle.speed_ * deltaTime;
-        }
-    }
-
-    //goal check
-    check_goals(deltaTime);
-
-    //top and bottom walls collision check
-    check_wall_collision(deltaTime);
-
-    //check if ball collides with PLAYER paddle and either speed up and bounce back or move with velocity
-    //separate x axis check
-
-    if (detect_rect_collision_2d(player_paddle.position_,
-                                 sf::Vector2f(ball.position_.x + ball.velocity_.x * deltaTime, ball.position_.y),
-                                 player_paddle.shape_.getSize(), ball.shape_.getSize())) {
-        ball.velocity_.x *= -ball_velocity_multiplier;
-        ball.velocity_.y = randomf(-4.0, 4.0) * 100;
-    } else {
-        ball.position_.x += ball.velocity_.x * deltaTime;
-    }
-    //separate y axis check
-    if (detect_rect_collision_2d(player_paddle.position_,
-                                 sf::Vector2f(ball.position_.x, ball.position_.y + ball.velocity_.y * deltaTime),
-                                 player_paddle.shape_.getSize(), ball.shape_.getSize())) {
-        ball.velocity_.y *= -1;
-    } else { ball.position_.y += ball.velocity_.y * deltaTime; }
-
-    //check for bot paddle collision
-    if (detect_rect_collision_2d(bot_paddle.position_,
-                                 sf::Vector2f(ball.position_.x + ball.velocity_.x * deltaTime, ball.position_.y),
-                                 bot_paddle.shape_.getSize(), ball.shape_.getSize())) {
-        ball.velocity_.x *= -ball_velocity_multiplier;
-        ball.velocity_.y = randomf(-4.0, 4.0) * 100;
-    }
-    if (detect_rect_collision_2d(bot_paddle.position_,
-                                 sf::Vector2f(ball.position_.x, ball.position_.y + ball.velocity_.y * deltaTime),
-                                 bot_paddle.shape_.getSize(), ball.shape_.getSize()))
-        { ball.velocity_.y *= -1; }
-
+void Pong::move_bot_paddle() {
     //BOT AI
     float ball_center_pos_y = ball.shape_.getPosition().y + ball.shape_.getSize().y / 2;
-    if (bot_paddle.position_.y + bot_paddle.shape_.getSize().y / 2 > ball_center_pos_y) {
-        if (!detect_rect_collision_2d(bot_paddle.position_,
-                                      sf::Vector2f(ball.position_.x,
-                                                   ball.position_.y + ball.velocity_.y * deltaTime),
-                                      bot_paddle.shape_.getSize(),
-                                      ball.shape_.getSize()) && bot_paddle.position_.y > 0) {
-            bot_paddle.position_.y -= bot_paddle.speed_ * deltaTime;
-        }
+    if ((bot_paddle.position_.y + bot_paddle.shape_.getSize().y / 2 > ball_center_pos_y) && (!detect_rect_collision_2d(
+            bot_paddle.position_,
+            sf::Vector2f(ball.position_.x,
+                         ball.position_.y + ball.velocity_.y * delta_time),
+            bot_paddle.shape_.getSize(),
+            ball.shape_.getSize()) && bot_paddle.position_.y > 0)) {
+        bot_paddle.position_.y -= bot_paddle.speed_ * delta_time;
     }
-    if (bot_paddle.position_.y + bot_paddle.shape_.getSize().y / 2 < ball_center_pos_y) {
-        if (!detect_rect_collision_2d(bot_paddle.position_,
-                                      sf::Vector2f(ball.position_.x,
-                                                   ball.position_.y + ball.velocity_.y * deltaTime),
-                                      bot_paddle.shape_.getSize(),
-                                      ball.shape_.getSize()) && bot_paddle.position_.y + bot_paddle.shape_.getSize()
-            .y <
-            renderer_.
-            window.getSize().y) {
-            bot_paddle.position_.y += bot_paddle.speed_ * deltaTime;
-        }
+    if ((bot_paddle.position_.y + bot_paddle.shape_.getSize().y / 2 < ball_center_pos_y) && !detect_rect_collision_2d(
+            bot_paddle.position_,
+            sf::Vector2f(ball.position_.x,
+                         ball.position_.y + ball.velocity_.y * delta_time),
+            bot_paddle.shape_.getSize(),
+            ball.shape_.getSize()) && bot_paddle.position_.y + bot_paddle.shape_.getSize()
+        .y <
+        renderer_.
+        window.getSize().y) {
+        bot_paddle.position_.y += bot_paddle.speed_ * delta_time;
     }
+}
+
+void Pong::move_player_paddle_up(const bool &key_up_pressed) {
+    sf::Vector2f new_pos(player_paddle.position_.x,
+                         player_paddle.position_.y - player_paddle.speed_ * delta_time);
+    if ((key_up_pressed && player_paddle.position_.y > player_paddle.shape_.getOutlineThickness()) && (!
+            detect_rect_collision_2d(new_pos, ball.position_, player_paddle.shape_.getSize(),
+                                     ball.shape_.getSize())
+        )) {
+        player_paddle.position_.y -= player_paddle.speed_ * delta_time;
+    }
+}
+
+void Pong::move_player_paddle_down(const bool &key_down_pressed) {
+    sf::Vector2f new_pos(player_paddle.position_.x,
+                         player_paddle.position_.y + player_paddle.speed_ * delta_time);
+    if ((key_down_pressed && player_paddle.position_.y < renderer_.WINDOW_SIZE.y - player_paddle.shape_.getSize().
+         y -
+         player_paddle.shape_.getOutlineThickness()
+        ) && (!detect_rect_collision_2d(new_pos, ball.position_, player_paddle.shape_.getSize(),
+                                        ball.shape_.getSize()))) {
+        player_paddle.position_.y += player_paddle.speed_ * delta_time;
+    }
+}
+
+void Pong::render_unpaused(const bool &key_up_pressed, const bool &key_down_pressed) {
+    //goal check
+    check_goals();
+
+    //top and bottom walls collision check
+    check_wall_collision();
+
+    //check if ball collides with PLAYER paddle and either speed up and bounce back or move with velocity
+    //separate player x axis check
+    check_paddle_single_axis_collision(player_paddle, 'x');
+    //separate player y axis check
+    check_paddle_single_axis_collision(player_paddle, 'y');
+    //separate bot x axis check
+    check_paddle_single_axis_collision(bot_paddle, 'x');
+    //separate bot y axis check
+    check_paddle_single_axis_collision(bot_paddle, 'y');
+
+    //move player paddle if there is no ball colliding up
+    move_player_paddle_up(key_up_pressed);
+
+    //move player paddle if there is no ball colliding down
+    move_player_paddle_down(key_down_pressed);
+
+    //move bot AI
+    move_bot_paddle();
+
+    //move ball
+    move_ball();
 
     //set positions
     ball.shape_.setPosition(ball.position_);
     player_paddle.shape_.setPosition(player_paddle.position_);
     bot_paddle.shape_.setPosition(bot_paddle.position_);
 
-    //draw everything
+    //declare UI
     std::string player_score_string = std::to_string(player_score);
     std::string bot_score_string = std::to_string(bot_score);
     sf::Text scoreboard(player_score_string += " : " + bot_score_string, font, 100);
@@ -144,7 +139,7 @@ void Pong::render_unpaused(float deltaTime, bool key_up_pressed, bool key_down_p
                          textRect.top + textRect.height / 2.0f);
     scoreboard.setPosition(sf::Vector2f(renderer_.window.getSize().x / 2.0f, 50));
 
-    //display rectangle
+    //draw everything
     renderer_.window.clear(sf::Color::Green);
     renderer_.window.draw(ball.shape_);
     renderer_.window.draw(player_paddle.shape_);
@@ -153,8 +148,8 @@ void Pong::render_unpaused(float deltaTime, bool key_up_pressed, bool key_down_p
     renderer_.window.display();
 }
 
-void Pong::render_paused() {
-    //render paused text
+void Pong::render_paused() const {
+    //declare and draw paused text
     sf::Text pause_text("PAUSED", font, 200);
     pause_text.setFillColor(sf::Color::Black);
     pause_text.setOutlineColor(sf::Color::White);
@@ -168,9 +163,13 @@ void Pong::render_paused() {
     renderer_.window.display();
 }
 
-void Pong::update_game(float deltaTime, bool key_up_pressed, bool key_down_pressed, bool game_paused) {
+
+//TODO is there difference between const and const &
+void Pong::update_game(const float &deltaTime, const bool &key_up_pressed, const bool &key_down_pressed,
+                       const bool &game_paused) {
+    delta_time = deltaTime;
     if (!game_paused) {
-        render_unpaused(deltaTime, key_up_pressed, key_down_pressed);
+        render_unpaused(key_up_pressed, key_down_pressed);
     } else {
         render_paused();
     }

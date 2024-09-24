@@ -9,8 +9,6 @@
 #include "renderer.h"
 
 
-
-
 class Paddle {
 public:
     explicit Paddle(
@@ -52,32 +50,52 @@ public:
     sf::Vector2f start_velocity_;
     sf::Vector2f velocity_;
     sf::Color fill_color_;
-
 };
 
 class Pong {
 private:
-    Renderer& renderer_;
+    Renderer &renderer_;
+
 public:
-    Pong(Renderer& renderer): renderer_(renderer) {};
-    Ball ball = Ball(sf::Vector2f(100, 100),sf::Vector2f(540, 250), sf::Vector2f(-400.0, 0.0),sf::Color::White);
-    Paddle player_paddle = Paddle(sf::Vector2f(20, 150), sf::Vector2f(20, renderer_.WINDOW_SIZE.y / 2), sf::Color::Blue, 200.0);
-    Paddle bot_paddle = Paddle(sf::Vector2f(20, 150), sf::Vector2f(renderer_.WINDOW_SIZE.x - 40, renderer_.WINDOW_SIZE.y / 2),sf::Color::Red, 200.0);
+    Pong(Renderer &renderer): renderer_(renderer) {
+    };
+    Ball ball = Ball(sf::Vector2f(100, 100), sf::Vector2f(540, 250), sf::Vector2f(-400.0, 0.0), sf::Color::White);
+    Paddle player_paddle = Paddle(sf::Vector2f(20, 150), sf::Vector2f(20, renderer_.WINDOW_SIZE.y / 2), sf::Color::Blue,
+                                  200.0);
+    Paddle bot_paddle = Paddle(sf::Vector2f(20, 150),
+                               sf::Vector2f(renderer_.WINDOW_SIZE.x - 40, renderer_.WINDOW_SIZE.y / 2), sf::Color::Red,
+                               200.0);
     bool game_over_ = false;
     int player_score = 0;
     int bot_score = 0;
     float ball_velocity_multiplier = 1.05;
-    void init_game();
-    //TODO add class input mapper/manager and inside all key presses and change param to only Input class
-    void update_game(float deltaTime,bool key_up_pressed, bool key_down_pressed, bool game_paused);
-    void render_paused();
-    void render_unpaused(float deltaTime, bool key_up_pressed, bool key_down_pressed);
-    void check_goals(float deltaTime);
-    void check_wall_collision(float deltaTime);
-    void check_paddle_single_axis_collision(const Paddle &paddle, const char &axis,float deltaTime);
-    //TODO delta time into class?
-    sf::Font font;
+    float delta_time;
 
+    void init_game();
+
+    //TODO add class input mapper/manager and inside all key presses and change param to only Input class
+    void update_game(const float &deltaTime, const bool &key_up_pressed, const bool &key_down_pressed,
+                     const bool &game_paused);
+
+    void render_paused() const;
+
+    void render_unpaused(const bool &key_up_pressed, const bool &key_down_pressed);
+
+    void check_goals();
+
+    void check_wall_collision();
+
+    void check_paddle_single_axis_collision(const Paddle &paddle, const char &axis);
+
+    void move_ball();
+
+    void move_bot_paddle();
+
+    void move_player_paddle_up(const bool &key_up_pressed);
+
+    void move_player_paddle_down(const bool &key_down_pressed);
+
+    sf::Font font;
 };
 
 
