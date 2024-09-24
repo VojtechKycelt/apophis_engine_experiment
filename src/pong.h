@@ -70,6 +70,12 @@ public:
     void init_game();
     //TODO add class input mapper/manager and inside all key presses and change param to only Input class
     void update_game(float deltaTime,bool key_up_pressed, bool key_down_pressed, bool game_paused);
+    void render_paused();
+    void render_unpaused(float deltaTime, bool key_up_pressed, bool key_down_pressed);
+    void check_goals(float deltaTime);
+    void check_wall_collision(float deltaTime);
+    void check_paddle_single_axis_collision(const Paddle &paddle, const char &axis,float deltaTime);
+    //TODO delta time into class?
     sf::Font font;
 
 };
