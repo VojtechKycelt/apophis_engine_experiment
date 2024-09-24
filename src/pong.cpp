@@ -163,9 +163,7 @@ void Pong::render_paused() const {
     renderer_.window.display();
 }
 
-
-//TODO is there difference between const and const &
-void Pong::update_game(float deltaTime, bool key_up_pressed, bool key_down_pressed, const bool game_paused) {
+void Pong::update_game(float deltaTime, bool key_up_pressed, bool key_down_pressed, bool game_paused) {
     delta_time = deltaTime;
     if (!game_paused) {
         render_unpaused(key_up_pressed, key_down_pressed);

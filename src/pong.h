@@ -88,7 +88,7 @@ public:
 
     void update_game(float deltaTime, bool key_up_pressed, bool key_down_pressed, bool game_paused);
 
-    //TODO add class input mapper/manager and inside all key presses and change param to only Input class
+    //maybe add class input mapper/manager and inside all key presses and change param to only Input class
     void render_unpaused(bool key_up_pressed, bool key_down_pressed);
 
     void move_player_paddle_up(bool key_up_pressed);

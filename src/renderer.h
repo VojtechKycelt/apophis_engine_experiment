@@ -5,8 +5,6 @@
 
 class Renderer {
 public:
-    //TODO explicit? wdym?
-    //default constructor?
     Renderer(const Renderer &);
     Renderer(const sf::Vector2i& window_size, const std::string& window_name, const int& fps_limit) : WINDOW_SIZE(window_size),
         window_name_(window_name) {
@@ -19,7 +17,6 @@ public:
         window_name_
     );
 
-    //TODO abstract param to render other objects (triangles/lines)
     void render(const sf::RectangleShape& rect) {
         window.clear(sf::Color::Green);
         window.draw(rect);
