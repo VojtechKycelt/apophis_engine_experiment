@@ -70,32 +70,30 @@ public:
     int bot_score = 0;
     float ball_velocity_multiplier = 1.05;
     float delta_time;
+    sf::Font font;
 
     void init_game();
-
-    //TODO add class input mapper/manager and inside all key presses and change param to only Input class
-    void update_game(const float &deltaTime, const bool &key_up_pressed, const bool &key_down_pressed,
-                     const bool &game_paused);
-
-    void render_paused() const;
-
-    void render_unpaused(const bool &key_up_pressed, const bool &key_down_pressed);
 
     void check_goals();
 
     void check_wall_collision();
 
-    void check_paddle_single_axis_collision(const Paddle &paddle, const char &axis);
+    void render_paused() const;
 
     void move_ball();
 
     void move_bot_paddle();
 
-    void move_player_paddle_up(const bool &key_up_pressed);
+    void check_paddle_single_axis_collision(const Paddle &paddle, char axis);
 
-    void move_player_paddle_down(const bool &key_down_pressed);
+    void update_game(float deltaTime, bool key_up_pressed, bool key_down_pressed, bool game_paused);
 
-    sf::Font font;
+    //TODO add class input mapper/manager and inside all key presses and change param to only Input class
+    void render_unpaused(bool key_up_pressed, bool key_down_pressed);
+
+    void move_player_paddle_up(bool key_up_pressed);
+
+    void move_player_paddle_down(bool key_down_pressed);
 };
 
 
