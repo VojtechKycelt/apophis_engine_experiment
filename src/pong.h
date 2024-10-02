@@ -7,6 +7,7 @@
 #include "SFML/System/Vector2.hpp"
 #include <SFML/Graphics.hpp>
 #include "renderer.h"
+#include "input_manager.h"
 
 
 class Paddle {
@@ -55,9 +56,10 @@ public:
 class Pong {
 private:
     Renderer &renderer_;
+    InputManager &input_manager_;
 
 public:
-    Pong(Renderer &renderer): renderer_(renderer) {
+    Pong(Renderer &renderer, InputManager &input_manager, sf::Font &font): renderer_(renderer),input_manager_(input_manager), font_(font) {
     };
     Ball ball = Ball(sf::Vector2f(100, 100), sf::Vector2f(540, 250), sf::Vector2f(-400.0, 0.0), sf::Color::White);
     Paddle player_paddle = Paddle(sf::Vector2f(20, 150), sf::Vector2f(20, renderer_.WINDOW_SIZE.y / 2), sf::Color::Blue,
@@ -70,7 +72,7 @@ public:
     int bot_score = 0;
     float ball_velocity_multiplier = 1.05;
     float delta_time;
-    sf::Font font;
+    sf::Font &font_;
 
     void init_game();
 
@@ -86,10 +88,10 @@ public:
 
     void check_paddle_single_axis_collision(const Paddle &paddle, char axis);
 
-    void update_game(float deltaTime, bool key_up_pressed, bool key_down_pressed, bool game_paused);
+    void update_game(float deltaTime, bool game_paused);
 
     //maybe add class input mapper/manager and inside all key presses and change param to only Input class
-    void render_unpaused(bool key_up_pressed, bool key_down_pressed);
+    void render_unpaused();
 
     void move_player_paddle_up(bool key_up_pressed);
 

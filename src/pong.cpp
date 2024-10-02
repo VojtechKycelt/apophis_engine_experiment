@@ -93,7 +93,7 @@ void Pong::move_player_paddle_down(bool key_down_pressed) {
     }
 }
 
-void Pong::render_unpaused(bool key_up_pressed, bool key_down_pressed) {
+void Pong::render_unpaused() {
     //goal check
     check_goals();
 
@@ -111,10 +111,10 @@ void Pong::render_unpaused(bool key_up_pressed, bool key_down_pressed) {
     check_paddle_single_axis_collision(bot_paddle, 'y');
 
     //move player paddle if there is no ball colliding up
-    move_player_paddle_up(key_up_pressed);
+    move_player_paddle_up(input_manager_.is_key_pressed("UP"));
 
     //move player paddle if there is no ball colliding down
-    move_player_paddle_down(key_down_pressed);
+    move_player_paddle_down(input_manager_.is_key_pressed("DOWN"));
 
     //move bot AI
     move_bot_paddle();
@@ -130,7 +130,7 @@ void Pong::render_unpaused(bool key_up_pressed, bool key_down_pressed) {
     //declare UI
     std::string player_score_string = std::to_string(player_score);
     std::string bot_score_string = std::to_string(bot_score);
-    sf::Text scoreboard(player_score_string += " : " + bot_score_string, font, 100);
+    sf::Text scoreboard(player_score_string += " : " + bot_score_string, font_, 100);
     scoreboard.setFillColor(sf::Color::White);
     scoreboard.setOutlineColor(sf::Color::Black);
     //scoreboard.setOutlineThickness(1);
@@ -150,7 +150,7 @@ void Pong::render_unpaused(bool key_up_pressed, bool key_down_pressed) {
 
 void Pong::render_paused() const {
     //declare and draw paused text
-    sf::Text pause_text("PAUSED", font, 200);
+    sf::Text pause_text("PAUSED", font_, 200);
     pause_text.setFillColor(sf::Color::Black);
     pause_text.setOutlineColor(sf::Color::White);
     pause_text.setOutlineThickness(1);
@@ -163,10 +163,10 @@ void Pong::render_paused() const {
     renderer_.window.display();
 }
 
-void Pong::update_game(float deltaTime, bool key_up_pressed, bool key_down_pressed, bool game_paused) {
+void Pong::update_game(float deltaTime, bool game_paused) {
     delta_time = deltaTime;
     if (!game_paused) {
-        render_unpaused(key_up_pressed, key_down_pressed);
+        render_unpaused();
     } else {
         render_paused();
     }
@@ -174,7 +174,5 @@ void Pong::update_game(float deltaTime, bool key_up_pressed, bool key_down_press
 
 
 void Pong::init_game() {
-    if (!font.loadFromFile("../../src/spaceranger.ttf"))
-        std::cerr << "FONT NOT LOADED" << std::endl;
-    //return EXIT_FAILURE;
+
 }

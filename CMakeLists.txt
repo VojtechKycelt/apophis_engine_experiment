@@ -18,7 +18,9 @@ add_executable(main src/main.cpp
         src/pong.cpp
         src/pong.h
         src/util.cpp
-        src/util.h)
+        src/util.h
+        src/input_manager.cpp
+        src/input_manager.h)
 target_link_libraries(main PRIVATE sfml-graphics)
 target_compile_features(main PRIVATE cxx_std_17)
 
