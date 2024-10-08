@@ -163,8 +163,9 @@ void Pong::render_paused() const {
     renderer_.window.display();
 }
 
-void Pong::update_game(float deltaTime, bool game_paused) {
+void Pong::update_game(float deltaTime, bool &game_paused) {
     delta_time = deltaTime;
+    input_manager_.detect_input_press(renderer_,game_paused);
     if (!game_paused) {
         render_unpaused();
     } else {

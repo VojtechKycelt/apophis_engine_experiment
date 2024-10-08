@@ -88,7 +88,7 @@ public:
 
     void check_paddle_single_axis_collision(const Paddle &paddle, char axis);
 
-    void update_game(float deltaTime, bool game_paused);
+    void update_game(float deltaTime, bool &game_paused);
 
     //maybe add class input mapper/manager and inside all key presses and change param to only Input class
     void render_unpaused();

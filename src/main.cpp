@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "util.h"
 #include "input_manager.h"
+#include "Scene.h"
 
 int main() {
     //declare renderer with window
@@ -28,14 +29,15 @@ int main() {
     Pong pong(renderer,input_manager, font);
     //pong.init_game();
 
+    //Scene scene(renderer);
 
     //engine loop
     while (renderer.window.isOpen()) {
         //get delta time for same speed of the engine with different fps
         deltaTime = deltaClock.restart().asSeconds();
 
-        input_manager.detect_input_press(renderer, game_paused);
-
         pong.update_game(deltaTime,game_paused);
+
+        //scene.update(deltaTime,game_paused);
     }
 }
