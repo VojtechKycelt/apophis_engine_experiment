@@ -6,6 +6,7 @@
 #include "util.h"
 #include <iostream>
 #include <map>
+#include <queue>
 #include <set>
 
 void Scene::update(float deltaTime, bool game_paused) {
@@ -31,8 +32,8 @@ void Scene::update(float deltaTime, bool game_paused) {
 
 void Scene::init() {
     init_graph();
-    auto it1 = graph.nodes.find(0);
-    auto it2 = graph.nodes.find(9);
+    auto it1 = graph.nodes.find(1);
+    auto it2 = graph.nodes.find(5);
     if (it1 != graph.nodes.end() && it2 != graph.nodes.end()) {
         astar(&it1->second, &it2->second);
     } else {
@@ -65,54 +66,43 @@ std::vector<int> construct_final_path(const std::map<int, Node *> &path, Node* c
     return final_path;
 }
 
-class Compare {
-public:
-    bool operator()(Node* a, Node* b){
-        float dist1 = get_distance(a->position_, end_pos);
-        float dist2 = get_distance(b->position_, end_pos);
-        return dist1 < dist2;
-    }
-
-sf::Vector2f end_pos;
-};
-
 std::vector<int> Scene::astar(Node *start, Node *end) {
     std::vector<int> final_path;
-
-    std::vector<Node *> adjacent_nodes = find_all_edges_from_node(start);
-    //priority queue - fringe that returns node with smallest distance
-    auto cmp = [end](Node* left, Node* right){return (get_distance(left->position_,end->position_)) < (get_distance(right->position_,end->position_));};
-    std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> fringe(cmp);
-    //std::priority_queue<Node *, Compare> fringe;
-    //TODO sort fringe to choose the point with heuristics - closest dist to end node
-    for (auto &&an: adjacent_nodes) fringe.push(an);
     std::map<int, float> visited{{start->ID_,0.0}};
+    std::vector<Node *> adjacent_nodes = find_all_edges_from_node(start);
+
+    auto cmp = [end, &visited](Node* left, Node* right){
+        float left_cost = visited[left->ID_] + get_distance(left->position_, end->position_);
+        float right_cost = visited[right->ID_] + get_distance(right->position_, end->position_);
+        return left_cost > right_cost;
+    };
+    std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> fringe(cmp);
+
+    for (auto &&an: adjacent_nodes) fringe.push(an);
     std::map<int, Node *> path;
 
     while (!fringe.empty()) {
         Node *current = fringe.top();
         std::cout << fringe.top()->ID_ << ", ";
         fringe.pop();
+
         if (current == end) {
             final_path = construct_final_path(path, current, start);
-            //print_final_path(start, end, final_path);
             break;
         }
-        auto it = visited.find(current->ID_);
-        visited.insert({current->ID_, get_distance(current->position_,start->position_)+it->second});
+
+        current->state = VISITED;
         adjacent_nodes = find_all_edges_from_node(current);
         for (auto &&an: adjacent_nodes) {
-            auto it_visited = visited.find(an->ID_);
-            if (visited.count(an->ID_) != 0) {
-                float dist = get_distance(an->position_,current->position_) + it->second;
-                if (it_visited->second > dist){
-                    visited[current->ID_] = dist;
-                }
-            } else {
+            float new_cost = visited[current->ID_] + get_distance(current->position_, an->position_);
+
+            if (visited.count(an->ID_) == 0 || new_cost < visited[an->ID_]) {
+                visited[an->ID_] = new_cost;
                 fringe.push(an);
-                path.insert({an->ID_, current});
+                path[an->ID_] = current;
             }
         }
+
     }
     return final_path;
 }
@@ -134,19 +124,16 @@ std::vector<Node *> Scene::find_all_edges_from_node(Node *node) {
 
 void Scene::init_graph() {
 
-    Node n0(0, sf::Vector2f(300, 300));
-    Node n1(1, sf::Vector2f(130, 100));
-    Node n2(2, sf::Vector2f(400, 100));
-    Node n3(3, sf::Vector2f(150, 300));
-    Node n4(4, sf::Vector2f(200, 400));
-    Node n5(5, sf::Vector2f(700, 300));
-    Node n6(6, sf::Vector2f(renderer_.window.getSize().x - 100, 200));
-    Node n7(7, sf::Vector2f(renderer_.window.getSize().x - 100, renderer_.window.getSize().y - 100));
-    Node n8(8, sf::Vector2f(renderer_.window.getSize().x - 300, renderer_.window.getSize().y - 20));
-    Node n9(9, sf::Vector2f(renderer_.window.getSize().x / 2, renderer_.window.getSize().y - 400));
-    Node n10(10, sf::Vector2f(80, renderer_.window.getSize().y - 50));
+    Node n1(1, sf::Vector2f(100, 100));
+    Node n2(2, sf::Vector2f(100, 200));
+    Node n3(3, sf::Vector2f(100, 400));
+    Node n4(4, sf::Vector2f(700, 700));
+    Node n5(5, sf::Vector2f(1000, 700));
+    Node n6(6, sf::Vector2f(50, 50));
+    Node n7(7, sf::Vector2f(700, 200));
+    Node n8(8, sf::Vector2f(750, 400));
 
-    graph.nodes.insert({n0.ID_, n0});
+
     graph.nodes.insert({n1.ID_, n1});
     graph.nodes.insert({n2.ID_, n2});
     graph.nodes.insert({n3.ID_, n3});
@@ -155,25 +142,15 @@ void Scene::init_graph() {
     graph.nodes.insert({n6.ID_, n6});
     graph.nodes.insert({n7.ID_, n7});
     graph.nodes.insert({n8.ID_, n8});
-    graph.nodes.insert({n9.ID_, n9});
-    graph.nodes.insert({n10.ID_, n10});
 
-
-    Edge e0(0, 1);
     Edge e1(1, 2);
-    Edge e2(1, 3);
-    Edge e3(3, 0);
-    Edge e4(3, 4);
-    Edge e5(5, 2);
-    Edge e6(6, 2);
-    Edge e7(6, 8);
-    Edge e8(7, 9);
-    Edge e10(10, 9);
-    Edge e12(8, 4);
-    Edge e13(10, 1);
+    Edge e2(2, 3);
+    Edge e3(3, 4);
+    Edge e4(4, 5);
+    Edge e5(1, 6);
+    Edge e6(1, 7);
+    Edge e7(7, 8);
 
-
-    graph.edges.push_back(e0);
     graph.edges.push_back(e1);
     graph.edges.push_back(e2);
     graph.edges.push_back(e3);
@@ -181,10 +158,6 @@ void Scene::init_graph() {
     graph.edges.push_back(e5);
     graph.edges.push_back(e6);
     graph.edges.push_back(e7);
-    graph.edges.push_back(e8);
-    graph.edges.push_back(e10);
-    graph.edges.push_back(e12);
-    graph.edges.push_back(e13);
 }
 
 void Scene::draw_graph() {
@@ -203,6 +176,19 @@ void Scene::draw_graph() {
     for (auto &&node: graph.nodes) {
         sf::RectangleShape shape_;
         shape_.setSize(sf::Vector2f(10, 10));
+        switch(node.second.state)
+        {
+            case CURRENT:
+                shape_.setFillColor(sf::Color::Black);
+            break;
+            case VISITED:
+                shape_.setFillColor(sf::Color::Green);
+            break;
+            default:
+                shape_.setFillColor(sf::Color::White);
+            break;
+        }
+
         shape_.setPosition(node.second.position_ - sf::Vector2f(5, 5));
         renderer_.window.draw(shape_);
 

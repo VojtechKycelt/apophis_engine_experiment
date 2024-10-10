@@ -8,11 +8,16 @@
 #include <vector>
 #include <SFML/System/Vector2.hpp>
 #include <unordered_map>
+
+enum NODE_STATE {NONE,CURRENT,VISITED};
+
 class Node {
 public:
     Node(int ID, const sf::Vector2f &position): ID_(ID), position_(position){};
     int ID_;
     sf::Vector2f position_;
+    NODE_STATE state = NONE;
+
 };
 
 class Edge {
