@@ -3,6 +3,7 @@
 //
 
 #include "Scene.h"
+#include "util.h"
 #include <iostream>
 #include <map>
 #include <set>
@@ -64,30 +65,50 @@ std::vector<int> construct_final_path(const std::map<int, Node *> &path, Node* c
     return final_path;
 }
 
+class Compare {
+public:
+    bool operator()(Node* a, Node* b){
+        float dist1 = get_distance(a->position_, end_pos);
+        float dist2 = get_distance(b->position_, end_pos);
+        return dist1 < dist2;
+    }
+
+sf::Vector2f end_pos;
+};
+
 std::vector<int> Scene::astar(Node *start, Node *end) {
     std::vector<int> final_path;
 
     std::vector<Node *> adjacent_nodes = find_all_edges_from_node(start);
     //priority queue - fringe that returns node with smallest distance
-    std::queue<Node *> fringe;
+    auto cmp = [end](Node* left, Node* right){return (get_distance(left->position_,end->position_)) < (get_distance(right->position_,end->position_));};
+    std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> fringe(cmp);
+    //std::priority_queue<Node *, Compare> fringe;
     //TODO sort fringe to choose the point with heuristics - closest dist to end node
     for (auto &&an: adjacent_nodes) fringe.push(an);
-    //TODO visited should contain pair with visited node and distance to start so we can swap them
-    std::set<int> visited{start->ID_};
+    std::map<int, float> visited{{start->ID_,0.0}};
     std::map<int, Node *> path;
 
     while (!fringe.empty()) {
-        Node *current = fringe.front();
+        Node *current = fringe.top();
+        std::cout << fringe.top()->ID_ << ", ";
         fringe.pop();
         if (current == end) {
             final_path = construct_final_path(path, current, start);
-            print_final_path(start, end, final_path);
+            //print_final_path(start, end, final_path);
             break;
         }
-        visited.insert(current->ID_);
+        auto it = visited.find(current->ID_);
+        visited.insert({current->ID_, get_distance(current->position_,start->position_)+it->second});
         adjacent_nodes = find_all_edges_from_node(current);
         for (auto &&an: adjacent_nodes) {
-            if (visited.count(an->ID_) == 0) {
+            auto it_visited = visited.find(an->ID_);
+            if (visited.count(an->ID_) != 0) {
+                float dist = get_distance(an->position_,current->position_) + it->second;
+                if (it_visited->second > dist){
+                    visited[current->ID_] = dist;
+                }
+            } else {
                 fringe.push(an);
                 path.insert({an->ID_, current});
             }
