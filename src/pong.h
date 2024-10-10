@@ -74,8 +74,6 @@ public:
     float delta_time;
     sf::Font &font_;
 
-    void init_game();
-
     void check_goals();
 
     void check_wall_collision();

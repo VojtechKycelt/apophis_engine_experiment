@@ -42,3 +42,9 @@ float randomf(float min, float max) {
 
     return randomFloat;
 }
+
+float get_distance(const sf::Vector2f p1, const sf::Vector2f p2) {
+    float distance = pow(fabs(p1.x - p2.x),2)  + pow(fabs(p1.y - p2.y),2);
+    distance = pow(distance,0.5);
+    return distance;
+}

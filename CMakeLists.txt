@@ -22,7 +22,9 @@ add_executable(main src/main.cpp
         src/input_manager.cpp
         src/input_manager.h
         src/Scene.cpp
-        src/Scene.h)
+        src/Scene.h
+        src/Graph.cpp
+        src/Graph.h)
 target_link_libraries(main PRIVATE sfml-graphics)
 target_compile_features(main PRIVATE cxx_std_17)
 

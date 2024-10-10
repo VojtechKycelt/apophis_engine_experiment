@@ -15,7 +15,7 @@ int main() {
             "APOPHIS ENGINE EXPERIMENT",
             60);
     sf::Font font;
-    if (!font.loadFromFile("../../src/spaceranger.ttf"))
+    if (!font.loadFromFile("../../src/Roboto-Black.ttf"))
         return EXIT_FAILURE;
 
     //keep track of time between frames
@@ -27,17 +27,16 @@ int main() {
     //TODO put input manager into the Pong game
     InputManager input_manager;
     Pong pong(renderer,input_manager, font);
-    //pong.init_game();
-
-    //Scene scene(renderer);
+    Scene scene(renderer, font);
 
     //engine loop
     while (renderer.window.isOpen()) {
         //get delta time for same speed of the engine with different fps
         deltaTime = deltaClock.restart().asSeconds();
 
-        pong.update_game(deltaTime,game_paused);
+        //pong.update_game(deltaTime,game_paused);
 
-        //scene.update(deltaTime,game_paused);
+        scene.update(deltaTime,game_paused);
+
     }
 }

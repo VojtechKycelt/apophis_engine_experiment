@@ -13,5 +13,5 @@ bool detect_rect_collision_2d(const sf::Vector2f &a, const sf::Vector2f &b, cons
                               const sf::Vector2f &b_size);
 float randomf(float min, float max);
 
-
+float get_distance(const sf::Vector2f p1, const sf::Vector2f p2);
 #endif //UTIL_H

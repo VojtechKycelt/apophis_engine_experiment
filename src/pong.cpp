@@ -173,7 +173,3 @@ void Pong::update_game(float deltaTime, bool &game_paused) {
     }
 }
 
-
-void Pong::init_game() {
-
-}
